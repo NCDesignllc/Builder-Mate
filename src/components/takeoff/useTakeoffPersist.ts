@@ -20,8 +20,9 @@ function safeJsonParse<T>(s: string | null): T | null {
 }
 
 // Local storage key used across the app.
-function keyFor(projectId?: string) {
-  return projectId ? `buildermate.takeoff.${projectId}` : `buildermate.takeoff.demo`;
+function keyFor(projectId?: string, planId?: string) {
+  const base = projectId ? `buildermate.takeoff.${projectId}` : `buildermate.takeoff.demo`;
+  return planId ? `${base}.${planId}` : base;
 }
 
 /**
@@ -30,8 +31,8 @@ function keyFor(projectId?: string) {
  * - `scale` is derived from `scalesByPage[activePage]`
  * - `setScale` updates that page only
  */
-export function useTakeoffPersist(projectId?: string, activePage: number = 0) {
-  const storageKey = useMemo(() => keyFor(projectId), [projectId]);
+export function useTakeoffPersist(projectId?: string, planId?: string, activePage: number = 0) {
+  const storageKey = useMemo(() => keyFor(projectId, planId), [projectId, planId]);
 
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [scalesByPage, setScalesByPage] = useState<TakeoffScaleByPage>({});

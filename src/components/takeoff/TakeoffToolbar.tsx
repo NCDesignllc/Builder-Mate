@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { MousePointer2, Ruler, Minus, Square, Hand } from 'lucide-react';
+import { MousePointer2, Ruler, Minus, Square, Hand, Tag, Hash } from 'lucide-react';
 import type { TakeoffTool } from './types';
 
 type ToolDef = { id: TakeoffTool; label: string; icon: React.ComponentType<{ size?: number }>; };
@@ -10,6 +10,8 @@ const tools: ToolDef[] = [
   { id: 'scale', label: 'Scale', icon: Ruler },
   { id: 'measure', label: 'Length', icon: Minus },
   { id: 'area', label: 'Area', icon: Square },
+  { id: 'count', label: 'Count', icon: Hash },
+  { id: 'label', label: 'Label', icon: Tag },
 ];
 
 type Props = {

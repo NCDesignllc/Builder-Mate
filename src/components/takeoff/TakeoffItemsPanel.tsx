@@ -1,9 +1,7 @@
 import React, { useMemo } from "react";
-import type { PlanSource } from "./types";
+import type { PlanSource, Measurement } from "./types";
 import { PageNav } from "./PageNav";
 import { Trash2 } from "lucide-react";
-
-type Measurement = any;
 
 type Props = {
   isDarkMode: boolean;
@@ -47,7 +45,7 @@ export function TakeoffItemsPanel({
   const visibleMeasurements = useMemo(() => {
     // If you’re persisting per-page already, this filter is harmless.
     // If not, it’s REQUIRED to prevent “wrong page” clutter.
-    return (measurements || []).filter((m: any) => {
+    return (measurements || []).filter((m: Measurement) => {
       const p = typeof m?.pageIndex === "number" ? m.pageIndex : 0;
       return p === pageIndex;
     });
@@ -104,16 +102,17 @@ export function TakeoffItemsPanel({
           <div className="text-xs opacity-60">No measurements on this page yet.</div>
         ) : (
           <div className="space-y-2">
-            {visibleMeasurements.map((m: any) => (
+            {visibleMeasurements.map((m: Measurement) => (
               <div
                 key={m.id}
                 className="rounded border p-2 flex items-start justify-between gap-2 bg-white text-slate-800"
               >
                 <div className="min-w-0">
-                  <div className="text-xs font-bold truncate">{m.label || m.name || m.type || "Measurement"}</div>
+                  <div className="text-xs font-bold truncate">{m.label || `${m.kind} measurement`}</div>
                   <div className="text-[11px] opacity-70 break-words">
-                    {m.type === "line" ? "Line" : m.type === "area" ? "Area" : m.type || "Item"}
-                    {typeof m.value === "number" ? ` · ${m.value.toFixed(2)}` : ""}
+                    {m.kind === "length" ? "Length" : m.kind === "area" ? "Area" : m.kind === "count" ? "Count" : "Item"}
+                    {" · "}
+                    {m.points.length} point{m.points.length !== 1 ? "s" : ""}
                   </div>
                   {onUpdateMeasurement && (
                     <input

@@ -17,7 +17,7 @@ type Props = {
 export function TakeoffCanvas({ isDarkMode, projectId }: Props) {
   const [plan, setPlan] = useState<PlanSource | null>(null);
   const [pageIndex, setPageIndex] = useState(0);
-  const [tool, setTool] = useState<"select" | "scale" | "line" | "area" | "label">("select");
+  const [tool, setTool] = useState<"select" | "pan" | "scale" | "measure" | "area" | "count" | "label">("select");
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   // Persist is per-project + plan + page (per-page scale lock supported)
