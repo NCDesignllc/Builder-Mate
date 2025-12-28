@@ -18,6 +18,7 @@ export function TakeoffCanvas({ isDarkMode, projectId }: Props) {
   const [plan, setPlan] = useState<PlanSource | null>(null);
   const [pageIndex, setPageIndex] = useState(0);
   const [tool, setTool] = useState<"select" | "pan" | "scale" | "measure" | "area" | "count" | "label">("select");
+  const [labelsVisible, setLabelsVisible] = useState(true);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   // Persist is per-project + plan + page (per-page scale lock supported)
@@ -72,7 +73,14 @@ export function TakeoffCanvas({ isDarkMode, projectId }: Props) {
   return (
     <div className="h-[600px] flex gap-4">
       {/* Toolbar */}
-      <TakeoffToolbar isDarkMode={isDarkMode} disabled={!plan} tool={tool} onChange={setTool} />
+      <TakeoffToolbar 
+        isDarkMode={isDarkMode} 
+        disabled={!plan} 
+        tool={tool} 
+        onChange={setTool}
+        labelsVisible={labelsVisible}
+        onToggleLabels={() => setLabelsVisible(v => !v)}
+      />
 
       {/* Optional: thumbnails rail for PDF */}
       {doc && pages > 1 ? (
@@ -138,7 +146,7 @@ export function TakeoffCanvas({ isDarkMode, projectId }: Props) {
               tool={tool}
               measurements={measurements}
               scale={scale}
-              labelsVisible={true}
+              labelsVisible={labelsVisible}
               onAddMeasurement={(m) => setMeasurements((prev: any[]) => [...prev, m])}
               onUpdateMeasurement={(id: string, patch: any) =>
                 setMeasurements((prev: any[]) => prev.map((m) => (m.id === id ? { ...m, ...patch } : m)))

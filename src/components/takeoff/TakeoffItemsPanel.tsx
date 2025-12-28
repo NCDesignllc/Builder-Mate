@@ -1,7 +1,8 @@
 import React, { useMemo } from "react";
-import type { PlanSource, Measurement } from "./types";
+import type { PlanSource, Measurement, TakeoffScale } from "./types";
 import { PageNav } from "./PageNav";
 import { Trash2 } from "lucide-react";
+import { ScaleStatusIndicator } from "./ScaleStatusIndicator";
 
 type Props = {
   isDarkMode: boolean;
@@ -10,10 +11,11 @@ type Props = {
   pageIndex: number;
   onChangePage: (i: number) => void;
 
-  scale: any;
+  scale: TakeoffScale | null;
   measurements: Measurement[];
   onDeleteMeasurement: (id: string) => void;
   onUpdateMeasurement?: (id: string, patch: Partial<Measurement>) => void;
+  onSetScale?: () => void;
 
   onClearAll: () => void;
   persistKey: string;
@@ -29,6 +31,7 @@ export function TakeoffItemsPanel({
   measurements,
   onDeleteMeasurement,
   onUpdateMeasurement,
+  onSetScale,
   onClearAll,
   persistKey,
 }: Props) {
@@ -77,14 +80,9 @@ export function TakeoffItemsPanel({
         <PageNav pages={pages} pageIndex={pageIndex} onChange={onChangePage} disabled={!plan} />
       </div>
 
-      {/* Scale readout */}
-      <div className={`mt-3 text-[11px] ${muted}`}>
-        <div className="font-bold uppercase tracking-wide text-[10px] mb-1">Scale (per page)</div>
-        <div className="rounded border px-2 py-2 bg-slate-50 text-slate-700">
-          {scale?.mode === "ready"
-            ? `${scale.pixelsPerUnit.toFixed(3)} px / ${scale.unitLabel}`
-            : "Not set (use the Scale tool)."}
-        </div>
+      {/* Scale status */}
+      <div className="mt-3">
+        <ScaleStatusIndicator scale={scale} isDarkMode={isDarkMode} onSetScale={onSetScale} />
       </div>
 
       {/* Items list */}
