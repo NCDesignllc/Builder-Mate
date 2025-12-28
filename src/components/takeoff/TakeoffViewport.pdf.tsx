@@ -1,14 +1,21 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Maximize2, Minimize2, Minus, Plus } from "lucide-react";
 import { usePdfDocument } from "./usePdfDocument";
-import { PdfViewport } from "./PdfViewport";
-import type { PlanSource } from "./types";
+import { PdfViewportInteractive } from "./PdfViewportInteractive";
+import type { PlanSource, Measurement, TakeoffScale, TakeoffTool } from "./types";
 
 type Props = {
   isDarkMode: boolean;
   plan: PlanSource | null;
   pageIndex?: number; // 0-based
   renderScale?: number; // initial visual scale, default 1.5
+  tool: TakeoffTool;
+  measurements: Measurement[];
+  scale: TakeoffScale | null;
+  labelsVisible?: boolean;
+  onAddMeasurement: (m: Measurement) => void;
+  onUpdateMeasurement: (id: string, patch: Partial<Measurement>) => void;
+  onDeleteMeasurement: (id: string) => void;
 };
 
 function clamp(n: number, min: number, max: number) {
@@ -27,7 +34,19 @@ function clamp(n: number, min: number, max: number) {
  *
  * NOTE: Zoom changes ONLY PdfViewport renderScale (no CSS transforms).
  */
-export function TakeoffViewportPdf({ isDarkMode, plan, pageIndex = 0, renderScale = 1.5 }: Props) {
+export function TakeoffViewportPdf({ 
+  isDarkMode, 
+  plan, 
+  pageIndex = 0, 
+  renderScale = 1.5,
+  tool,
+  measurements,
+  scale,
+  labelsVisible = true,
+  onAddMeasurement,
+  onUpdateMeasurement,
+  onDeleteMeasurement,
+}: Props) {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const isPdf = !!plan && (plan.mime === "application/pdf" || plan.name?.toLowerCase().endsWith(".pdf"));
@@ -52,18 +71,18 @@ export function TakeoffViewportPdf({ isDarkMode, plan, pageIndex = 0, renderScal
   const safeIndex = pages > 0 ? Math.max(0, Math.min(pageIndex, pages - 1)) : pageIndex;
 
   // Local zoom state (starts from prop, stays in sync if prop changes)
-  const [scale, setScale] = useState(renderScale);
-  useEffect(() => setScale(renderScale), [renderScale]);
+  const [zoomScale, setZoomScale] = useState(renderScale);
+  useEffect(() => setZoomScale(renderScale), [renderScale]);
 
   const minScale = 0.5;
   const maxScale = 6;
   const step = 1.12;
 
-  const zoomIn = () => setScale((s) => clamp(s * step, minScale, maxScale));
-  const zoomOut = () => setScale((s) => clamp(s / step, minScale, maxScale));
-  const zoomReset = () => setScale(1);
+  const zoomIn = () => setZoomScale((s) => clamp(s * step, minScale, maxScale));
+  const zoomOut = () => setZoomScale((s) => clamp(s / step, minScale, maxScale));
+  const zoomReset = () => setZoomScale(1);
 
-  const zoomPct = useMemo(() => Math.round(scale * 100), [scale]);
+  const zoomPct = useMemo(() => Math.round(zoomScale * 100), [zoomScale]);
 
   // Canvas area ref (this is the element that currently scroll-pans on wheel)
   const viewportRef = useRef<HTMLDivElement | null>(null);
@@ -208,7 +227,19 @@ export function TakeoffViewportPdf({ isDarkMode, plan, pageIndex = 0, renderScal
         <div ref={viewportRef} className="absolute inset-0 overflow-auto overscroll-contain">
           {isPdf && doc && !error ? (
             <div className="p-6 inline-block align-top">
-              <PdfViewport doc={doc} pageIndex={safeIndex} renderScale={scale} isDarkMode={isDarkMode} />
+              <PdfViewportInteractive 
+                doc={doc} 
+                pageIndex={safeIndex} 
+                renderScale={zoomScale} 
+                isDarkMode={isDarkMode}
+                tool={tool}
+                measurements={measurements}
+                scale={scale}
+                labelsVisible={labelsVisible}
+                onAddMeasurement={onAddMeasurement}
+                onUpdateMeasurement={onUpdateMeasurement}
+                onDeleteMeasurement={onDeleteMeasurement}
+              />
             </div>
           ) : null}
         </div>

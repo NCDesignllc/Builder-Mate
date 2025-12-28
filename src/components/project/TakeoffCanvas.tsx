@@ -130,7 +130,21 @@ export function TakeoffCanvas({ isDarkMode, projectId }: Props) {
               </button>
             </div>
 
-            <TakeoffViewportPdf isDarkMode={isDarkMode} plan={plan} pageIndex={safePageIndex} renderScale={1.5} />
+            <TakeoffViewportPdf 
+              isDarkMode={isDarkMode} 
+              plan={plan} 
+              pageIndex={safePageIndex} 
+              renderScale={1.5}
+              tool={tool}
+              measurements={measurements}
+              scale={scale}
+              labelsVisible={true}
+              onAddMeasurement={(m) => setMeasurements((prev: any[]) => [...prev, m])}
+              onUpdateMeasurement={(id: string, patch: any) =>
+                setMeasurements((prev: any[]) => prev.map((m) => (m.id === id ? { ...m, ...patch } : m)))
+              }
+              onDeleteMeasurement={(id: string) => setMeasurements((prev: any[]) => prev.filter((m) => m.id !== id))}
+            />
 
             {isPdf && (pdfLoading || pdfError) ? (
               <div className={`absolute bottom-4 left-4 z-10 px-3 py-2 rounded-lg border ${theme.pill}`}>
