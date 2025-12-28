@@ -15,6 +15,7 @@ type Props = {
   onAddMeasurement: (m: Measurement) => void;
   onUpdateMeasurement: (id: string, patch: Partial<Measurement>) => void;
   onDeleteMeasurement: (id: string) => void;
+  onScaleCalibration?: (pixelDistance: number) => void;
 };
 
 /**
@@ -32,6 +33,7 @@ export function PdfViewportInteractive({
   onAddMeasurement,
   onUpdateMeasurement,
   onDeleteMeasurement,
+  onScaleCalibration,
 }: Props) {
   const [page, setPage] = useState<any>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -106,6 +108,7 @@ export function PdfViewportInteractive({
           onAddMeasurement={onAddMeasurement}
           onUpdateMeasurement={onUpdateMeasurement}
           onDeleteMeasurement={onDeleteMeasurement}
+          onScaleCalibration={onScaleCalibration}
         />
       )}
     </div>

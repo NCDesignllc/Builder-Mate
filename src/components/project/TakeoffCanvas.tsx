@@ -152,6 +152,7 @@ export function TakeoffCanvas({ isDarkMode, projectId }: Props) {
                 setMeasurements((prev: any[]) => prev.map((m) => (m.id === id ? { ...m, ...patch } : m)))
               }
               onDeleteMeasurement={(id: string) => setMeasurements((prev: any[]) => prev.filter((m) => m.id !== id))}
+              onSetScale={setScale}
             />
 
             {isPdf && (pdfLoading || pdfError) ? (

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Maximize2, Minimize2, Minus, Plus } from "lucide-react";
 import { usePdfDocument } from "./usePdfDocument";
 import { PdfViewportInteractive } from "./PdfViewportInteractive";
+import { ScaleModal } from "./ScaleModal";
 import type { PlanSource, Measurement, TakeoffScale, TakeoffTool } from "./types";
 
 type Props = {
@@ -16,6 +17,7 @@ type Props = {
   onAddMeasurement: (m: Measurement) => void;
   onUpdateMeasurement: (id: string, patch: Partial<Measurement>) => void;
   onDeleteMeasurement: (id: string) => void;
+  onSetScale: (scale: TakeoffScale) => void;
 };
 
 function clamp(n: number, min: number, max: number) {
@@ -46,8 +48,13 @@ export function TakeoffViewportPdf({
   onAddMeasurement,
   onUpdateMeasurement,
   onDeleteMeasurement,
+  onSetScale,
 }: Props) {
   const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  // Scale modal state
+  const [scaleModalOpen, setScaleModalOpen] = useState(false);
+  const [scalePixelDistance, setScalePixelDistance] = useState<number | null>(null);
 
   const isPdf = !!plan && (plan.mime === "application/pdf" || plan.name?.toLowerCase().endsWith(".pdf"));
   const { doc, pages, loading, error } = usePdfDocument(isPdf ? plan : null);
@@ -239,11 +246,31 @@ export function TakeoffViewportPdf({
                 onAddMeasurement={onAddMeasurement}
                 onUpdateMeasurement={onUpdateMeasurement}
                 onDeleteMeasurement={onDeleteMeasurement}
+                onScaleCalibration={(pixelDistance) => {
+                  setScalePixelDistance(pixelDistance);
+                  setScaleModalOpen(true);
+                }}
               />
             </div>
           ) : null}
         </div>
       </div>
+      
+      {/* Scale modal */}
+      <ScaleModal
+        isOpen={scaleModalOpen}
+        isDarkMode={isDarkMode}
+        pixelDistance={scalePixelDistance}
+        onClose={() => {
+          setScaleModalOpen(false);
+          setScalePixelDistance(null);
+        }}
+        onApply={(newScale) => {
+          onSetScale(newScale);
+          setScaleModalOpen(false);
+          setScalePixelDistance(null);
+        }}
+      />
     </div>
   );
 }

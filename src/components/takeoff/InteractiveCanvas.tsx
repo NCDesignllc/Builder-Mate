@@ -17,6 +17,7 @@ type Props = {
   onAddMeasurement: (m: Measurement) => void;
   onUpdateMeasurement: (id: string, patch: Partial<Measurement>) => void;
   onDeleteMeasurement: (id: string) => void;
+  onScaleCalibration?: (pixelDistance: number) => void; // Triggered when scale tool completes
 };
 
 type DrawingState = {
@@ -44,6 +45,7 @@ export function InteractiveCanvas({
   onAddMeasurement,
   onUpdateMeasurement,
   onDeleteMeasurement,
+  onScaleCalibration,
 }: Props) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   
@@ -240,21 +242,24 @@ export function InteractiveCanvas({
     if (drawing.kind === "measure" || drawing.kind === "scale") {
       // Complete line measurement
       if (drawing.points.length === 1) {
-        const m: Measurement = {
-          id: uuid(drawing.kind === "measure" ? "measure" : "scale"),
-          kind: "length",
-          points: [drawing.points[0], snapped],
-          pageIndex,
-          createdAt: Date.now(),
-        };
-        
         if (drawing.kind === "measure") {
+          const m: Measurement = {
+            id: uuid("measure"),
+            kind: "length",
+            points: [drawing.points[0], snapped],
+            pageIndex,
+            createdAt: Date.now(),
+          };
           onAddMeasurement(m);
         } else {
-          // For scale, we need to trigger scale modal
-          // This is handled by parent component
-          // For now, just complete the drawing
-          onAddMeasurement(m);
+          // For scale, calculate pixel distance and trigger calibration
+          const dx = snapped.x - drawing.points[0].x;
+          const dy = snapped.y - drawing.points[0].y;
+          const pixelDistance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (onScaleCalibration) {
+            onScaleCalibration(pixelDistance);
+          }
         }
         
         setDrawing(null);
