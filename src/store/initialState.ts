@@ -5,6 +5,8 @@ export const initialState: AppState = {
   isDarkMode: false,
   searchQuery: '',
   user: null,
+  accounts: [],
+  activeAccountId: null,
 
   projects: seedProjects,
   activeProjectId: null,

@@ -23,8 +23,14 @@ export type Project = {
   aiPlan?: string;
 };
 
+export type UserRole = 'Admin' | 'Estimator' | 'Viewer';
+
 export type User = {
+  id: string;
   name: string;
   title: string;
   email?: string;
+  company?: string;
+  profilePhotoUrl?: string;
+  role: UserRole;
 };
