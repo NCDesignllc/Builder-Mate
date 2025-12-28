@@ -35,7 +35,7 @@ export function TakeoffCanvas({ isDarkMode, projectId }: Props) {
     const isTypingTarget = (t: EventTarget | null) => {
       const el = t as HTMLElement | null;
       const tag = el?.tagName?.toLowerCase();
-      return tag === "input" || tag === "textarea" || (el as any)?.isContentEditable;
+      return tag === "input" || tag === "textarea" || el?.contentEditable === "true";
     };
 
     const onKeyDown = (e: KeyboardEvent) => {

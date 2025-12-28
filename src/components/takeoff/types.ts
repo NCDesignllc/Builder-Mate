@@ -1,4 +1,4 @@
-export type TakeoffTool = "select" | "pan" | "scale" | "measure" | "area" | "label" | "line";
+export type TakeoffTool = "select" | "pan" | "scale" | "line" | "measure" | "area" | "label";
 
 export type PlanSource = {
   id: string;
