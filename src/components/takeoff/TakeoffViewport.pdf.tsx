@@ -148,7 +148,7 @@ export function TakeoffViewportPdf({ isDarkMode, plan, pageIndex = 0, renderScal
             (reserved: Select • Line • Polyline • Count • Snap • Undo/Redo)
           </div>
           <div className={`hidden md:block text-[11px] ${theme.toolbarMuted}`}>
-            Hotkeys: <span className="font-semibold">F</span> fullscreen • <span className="font-semibold">Esc</span> exit •{" "}
+            Hotkeys: <span className="font-semibold">H</span> pan • <span className="font-semibold">F</span> fullscreen • <span className="font-semibold">Esc</span> exit •{" "}
             <span className="font-semibold">+</span>/<span className="font-semibold">-</span> zoom • <span className="font-semibold">0</span> reset
           </div>
         </div>

@@ -17,7 +17,7 @@ type Props = {
 export function TakeoffCanvas({ isDarkMode, projectId }: Props) {
   const [plan, setPlan] = useState<PlanSource | null>(null);
   const [pageIndex, setPageIndex] = useState(0);
-  const [tool, setTool] = useState<"select" | "scale" | "line" | "area" | "label">("select");
+  const [tool, setTool] = useState<"select" | "pan" | "scale" | "measure" | "area" | "label" | "line">("select");
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   // Persist is per-project + plan + page (per-page scale lock supported)
@@ -29,6 +29,27 @@ export function TakeoffCanvas({ isDarkMode, projectId }: Props) {
 
   // Load doc only for PDF plans (needed for page count + thumbnails)
   const { doc, pages, loading: pdfLoading, error: pdfError } = usePdfDocument(isPdf ? plan : null);
+
+  // Hotkey: H activates pan/grab tool
+  React.useEffect(() => {
+    const isTypingTarget = (t: EventTarget | null) => {
+      const el = t as HTMLElement | null;
+      const tag = el?.tagName?.toLowerCase();
+      return tag === "input" || tag === "textarea" || (el as any)?.isContentEditable;
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (isTypingTarget(e.target)) return;
+
+      if (e.key === "h" || e.key === "H") {
+        e.preventDefault();
+        setTool("pan");
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   const theme = useMemo(
     () => ({
