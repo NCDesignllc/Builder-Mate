@@ -2,13 +2,19 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Maximize2, Minimize2, Minus, Plus } from "lucide-react";
 import { usePdfDocument } from "./usePdfDocument";
 import { PdfViewport } from "./PdfViewport";
-import type { PlanSource } from "./types";
+import { MeasurementCanvas } from "./MeasurementCanvas";
+import type { PlanSource, TakeoffTool, TakeoffScale, Measurement } from "./types";
 
 type Props = {
   isDarkMode: boolean;
   plan: PlanSource | null;
   pageIndex?: number; // 0-based
   renderScale?: number; // initial visual scale, default 1.5
+  tool?: TakeoffTool;
+  scale?: TakeoffScale | null;
+  measurements?: Measurement[];
+  onAddMeasurement?: (m: Measurement) => void;
+  onUpdateMeasurement?: (id: string, patch: Partial<Measurement>) => void;
 };
 
 function clamp(n: number, min: number, max: number) {
@@ -23,12 +29,23 @@ function clamp(n: number, min: number, max: number) {
  *    - Mouse wheel over canvas area zooms (prevents scroll-pan)
  *    - +/- buttons
  *    - Keyboard +/- ; 0 resets to 100%
- * - Keeps a top toolbar placeholder for future takeoff tools
+ * - Now includes interactive measurement canvas overlay
  *
  * NOTE: Zoom changes ONLY PdfViewport renderScale (no CSS transforms).
  */
-export function TakeoffViewportPdf({ isDarkMode, plan, pageIndex = 0, renderScale = 1.5 }: Props) {
+export function TakeoffViewportPdf({ 
+  isDarkMode, 
+  plan, 
+  pageIndex = 0, 
+  renderScale = 1.5,
+  tool = 'select',
+  scale = null,
+  measurements = [],
+  onAddMeasurement,
+  onUpdateMeasurement,
+}: Props) {
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [pdfSize, setPdfSize] = useState({ width: 0, height: 0 });
 
   const isPdf = !!plan && (plan.mime === "application/pdf" || plan.name?.toLowerCase().endsWith(".pdf"));
   const { doc, pages, loading, error } = usePdfDocument(isPdf ? plan : null);
@@ -52,18 +69,18 @@ export function TakeoffViewportPdf({ isDarkMode, plan, pageIndex = 0, renderScal
   const safeIndex = pages > 0 ? Math.max(0, Math.min(pageIndex, pages - 1)) : pageIndex;
 
   // Local zoom state (starts from prop, stays in sync if prop changes)
-  const [scale, setScale] = useState(renderScale);
-  useEffect(() => setScale(renderScale), [renderScale]);
+  const [zoomScale, setZoomScale] = useState(renderScale);
+  useEffect(() => setZoomScale(renderScale), [renderScale]);
 
   const minScale = 0.5;
   const maxScale = 6;
   const step = 1.12;
 
-  const zoomIn = () => setScale((s) => clamp(s * step, minScale, maxScale));
-  const zoomOut = () => setScale((s) => clamp(s / step, minScale, maxScale));
-  const zoomReset = () => setScale(1);
+  const zoomIn = () => setZoomScale((s) => clamp(s * step, minScale, maxScale));
+  const zoomOut = () => setZoomScale((s) => clamp(s / step, minScale, maxScale));
+  const zoomReset = () => setZoomScale(1);
 
-  const zoomPct = useMemo(() => Math.round(scale * 100), [scale]);
+  const zoomPct = useMemo(() => Math.round(zoomScale * 100), [zoomScale]);
 
   // Canvas area ref (this is the element that currently scroll-pans on wheel)
   const viewportRef = useRef<HTMLDivElement | null>(null);
@@ -207,8 +224,31 @@ export function TakeoffViewportPdf({ isDarkMode, plan, pageIndex = 0, renderScal
       <div className="absolute inset-0" style={{ paddingTop: toolbarH }}>
         <div ref={viewportRef} className="absolute inset-0 overflow-auto overscroll-contain">
           {isPdf && doc && !error ? (
-            <div className="p-6 inline-block align-top">
-              <PdfViewport doc={doc} pageIndex={safeIndex} renderScale={scale} isDarkMode={isDarkMode} />
+            <div className="p-6 inline-block align-top relative">
+              <div 
+                className="relative" 
+                style={{ width: pdfSize.width || 'auto', height: pdfSize.height || 'auto' }}
+              >
+                <PdfViewport 
+                  doc={doc} 
+                  pageIndex={safeIndex} 
+                  renderScale={zoomScale} 
+                  isDarkMode={isDarkMode}
+                  onSize={(w, h) => setPdfSize({ width: w, height: h })}
+                />
+                {pdfSize.width > 0 && pdfSize.height > 0 && onAddMeasurement && (
+                  <MeasurementCanvas
+                    width={pdfSize.width}
+                    height={pdfSize.height}
+                    tool={tool}
+                    pageIndex={safeIndex}
+                    scale={scale}
+                    measurements={measurements}
+                    onAddMeasurement={onAddMeasurement}
+                    onUpdateMeasurement={onUpdateMeasurement || (() => {})}
+                  />
+                )}
+              </div>
             </div>
           ) : null}
         </div>

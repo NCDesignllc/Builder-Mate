@@ -6,9 +6,10 @@ type Props = {
   pageIndex: number; // 0-based
   renderScale: number; // pdf render scale (not takeoff scale)
   isDarkMode: boolean;
+  onSize?: (width: number, height: number) => void;
 };
 
-export function PdfViewport({ doc, pageIndex, renderScale, isDarkMode }: Props) {
+export function PdfViewport({ doc, pageIndex, renderScale, isDarkMode, onSize }: Props) {
   const [page, setPage] = useState<any>(null);
   const [err, setErr] = useState<string | null>(null);
 
@@ -66,7 +67,7 @@ export function PdfViewport({ doc, pageIndex, renderScale, isDarkMode }: Props) 
   return (
     <div className="absolute inset-0 flex items-center justify-center p-6">
       <div className={`rounded-lg border ${frame} overflow-auto max-w-full max-h-full`}>
-        <PdfPageCanvas page={page} scale={renderScale} className="shadow" />
+        <PdfPageCanvas page={page} scale={renderScale} className="shadow" onSize={onSize} />
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import { UploadCloud, X } from "lucide-react";
 import type { PlanSource } from "../takeoff/types";
 import { uuid } from "../takeoff/geometry";
 import { useTakeoffPersist } from "../takeoff/useTakeoffPersist";
+import { useUndoRedo } from "../takeoff/useUndoRedo";
 import { TakeoffToolbar } from "../takeoff/TakeoffToolbar";
 import { TakeoffItemsPanel } from "../takeoff/TakeoffItemsPanel";
 import { TakeoffViewportPdf } from "../takeoff/TakeoffViewport.pdf";
@@ -17,12 +18,24 @@ type Props = {
 export function TakeoffCanvas({ isDarkMode, projectId }: Props) {
   const [plan, setPlan] = useState<PlanSource | null>(null);
   const [pageIndex, setPageIndex] = useState(0);
-  const [tool, setTool] = useState<"select" | "scale" | "line" | "area" | "label">("select");
+  const [tool, setTool] = useState<"select" | "pan" | "scale" | "linear" | "area" | "count" | "label">("select");
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   // Persist is per-project + plan + page (per-page scale lock supported)
-  const { scale, setScale, measurements, setMeasurements, clear, storageKey } =
-    useTakeoffPersist(projectId, plan?.id, pageIndex);
+  const { 
+    scale, 
+    setScale, 
+    measurements, 
+    setMeasurements,
+    addMeasurement,
+    updateMeasurement,
+    deleteMeasurement,
+    clear, 
+    storageKey 
+  } = useTakeoffPersist(projectId, plan?.id, pageIndex);
+
+  // Undo/Redo
+  const { undo, redo, canUndo, canRedo } = useUndoRedo(measurements, setMeasurements);
 
   const isPdf =
     !!plan && (plan.mime === "application/pdf" || plan.name?.toLowerCase().endsWith(".pdf"));
@@ -69,10 +82,48 @@ export function TakeoffCanvas({ isDarkMode, projectId }: Props) {
   // Clamp pageIndex when doc/pages changes
   const safePageIndex = pages > 0 ? Math.max(0, Math.min(pageIndex, pages - 1)) : pageIndex;
 
+  // Keyboard shortcuts
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check if we're typing in an input
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+
+      // Tool shortcuts
+      if (e.key === 'v' || e.key === 'V') { setTool('select'); return; }
+      if (e.key === 'h' || e.key === 'H') { setTool('pan'); return; }
+      if (e.key === 's' || e.key === 'S') { setTool('scale'); return; }
+      if (e.key === 'l' || e.key === 'L') { setTool('linear'); return; }
+      if (e.key === 'a' || e.key === 'A') { setTool('area'); return; }
+      if (e.key === 'c' || e.key === 'C') { setTool('count'); return; }
+
+      // Undo/Redo
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault();
+        redo();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [undo, redo]);
+
   return (
     <div className="h-[600px] flex gap-4">
       {/* Toolbar */}
-      <TakeoffToolbar isDarkMode={isDarkMode} disabled={!plan} tool={tool} onChange={setTool} />
+      <TakeoffToolbar 
+        isDarkMode={isDarkMode} 
+        disabled={!plan} 
+        tool={tool} 
+        onChange={setTool}
+        onUndo={undo}
+        onRedo={redo}
+        canUndo={canUndo}
+        canRedo={canRedo}
+      />
 
       {/* Optional: thumbnails rail for PDF */}
       {doc && pages > 1 ? (
@@ -130,7 +181,17 @@ export function TakeoffCanvas({ isDarkMode, projectId }: Props) {
               </button>
             </div>
 
-            <TakeoffViewportPdf isDarkMode={isDarkMode} plan={plan} pageIndex={safePageIndex} renderScale={1.5} />
+            <TakeoffViewportPdf 
+              isDarkMode={isDarkMode} 
+              plan={plan} 
+              pageIndex={safePageIndex} 
+              renderScale={1.5}
+              tool={tool}
+              scale={scale}
+              measurements={measurements}
+              onAddMeasurement={addMeasurement}
+              onUpdateMeasurement={updateMeasurement}
+            />
 
             {isPdf && (pdfLoading || pdfError) ? (
               <div className={`absolute bottom-4 left-4 z-10 px-3 py-2 rounded-lg border ${theme.pill}`}>
@@ -152,12 +213,10 @@ export function TakeoffCanvas({ isDarkMode, projectId }: Props) {
         onChangePage={(i) => setPageIndex(Number(i))}
         scale={scale}
         measurements={measurements}
-        onDeleteMeasurement={(id: string) => setMeasurements((prev: any[]) => prev.filter((m) => m.id !== id))}
+        onDeleteMeasurement={deleteMeasurement}
         onClearAll={clearAll}
         persistKey={storageKey}
-        onUpdateMeasurement={(id: string, patch: any) =>
-          setMeasurements((prev: any[]) => prev.map((m) => (m.id === id ? { ...m, ...patch } : m)))
-        }
+        onUpdateMeasurement={updateMeasurement}
       />
     </div>
   );

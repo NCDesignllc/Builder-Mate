@@ -6,6 +6,16 @@ export function dist(a: Point, b: Point): number {
   return Math.hypot(dx, dy);
 }
 
+// Calculate total length of a polyline
+export function polylineLength(points: Point[]): number {
+  if (points.length < 2) return 0;
+  let total = 0;
+  for (let i = 0; i < points.length - 1; i++) {
+    total += dist(points[i], points[i + 1]);
+  }
+  return total;
+}
+
 // Shoelace formula
 export function polygonArea(points: Point[]): number {
   if (points.length < 3) return 0;

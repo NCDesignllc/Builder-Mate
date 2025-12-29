@@ -20,8 +20,10 @@ function safeJsonParse<T>(s: string | null): T | null {
 }
 
 // Local storage key used across the app.
-function keyFor(projectId?: string) {
-  return projectId ? `buildermate.takeoff.${projectId}` : `buildermate.takeoff.demo`;
+function keyFor(projectId?: string, planId?: string) {
+  if (projectId && planId) return `buildermate.takeoff.${projectId}.${planId}`;
+  if (projectId) return `buildermate.takeoff.${projectId}`;
+  return `buildermate.takeoff.demo`;
 }
 
 /**
@@ -30,8 +32,8 @@ function keyFor(projectId?: string) {
  * - `scale` is derived from `scalesByPage[activePage]`
  * - `setScale` updates that page only
  */
-export function useTakeoffPersist(projectId?: string, activePage: number = 0) {
-  const storageKey = useMemo(() => keyFor(projectId), [projectId]);
+export function useTakeoffPersist(projectId?: string, planId?: string, activePage: number = 0) {
+  const storageKey = useMemo(() => keyFor(projectId, planId), [projectId, planId]);
 
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [scalesByPage, setScalesByPage] = useState<TakeoffScaleByPage>({});
@@ -75,17 +77,28 @@ export function useTakeoffPersist(projectId?: string, activePage: number = 0) {
   }
 
   function setScale(next: TakeoffScale | null) {
-    setScalesByPage((prev) => ({ ...prev, [activePage]: next }));
+    setScalesByPage((prev) => {
+      if (next === null) {
+        const copy = { ...prev };
+        delete copy[activePage];
+        return copy;
+      }
+      return { ...prev, [activePage]: next };
+    });
   }
 
   // Helpers to keep measurements aligned to page
   function addMeasurement(m: Measurement) {
-    const pageIndex = (m.pageIndex ?? activePage) || 0;
+    const pageIndex = m.pageIndex ?? activePage;
     setMeasurements((prev) => [...prev, { ...m, pageIndex }]);
   }
 
-  function setMeasurementMeta(id: string, patch: Partial<Pick<Measurement, 'label' | 'tag'>>) {
+  function updateMeasurement(id: string, patch: Partial<Measurement>) {
     setMeasurements((prev) => prev.map((m) => (m.id === id ? { ...m, ...patch } : m)));
+  }
+
+  function deleteMeasurement(id: string) {
+    setMeasurements((prev) => prev.filter((m) => m.id !== id));
   }
 
   return {
@@ -93,7 +106,8 @@ export function useTakeoffPersist(projectId?: string, activePage: number = 0) {
     measurements,
     setMeasurements,
     addMeasurement,
-    setMeasurementMeta,
+    updateMeasurement,
+    deleteMeasurement,
     scale,
     setScale,
     // expose full map for UI/debug if needed
