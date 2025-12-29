@@ -1,5 +1,5 @@
 import type { Measurement, TakeoffScale } from './types';
-import { computeMeasurement } from './measurementMath';
+import { computeMeasurement, computeTotals, formatNumber } from './measurementMath';
 
 function escapeCsv(value: string) {
   const needs = /[",\n]/.test(value);
@@ -7,21 +7,81 @@ function escapeCsv(value: string) {
   return needs ? `"${v}"` : v;
 }
 
-export function measurementsToCsv(measurements: Measurement[], scale: TakeoffScale | null) {
-  const header = ['id', 'kind', 'value', 'unit', 'createdAt'].join(',');
+export function measurementsToCsv(measurements: Measurement[], scale: TakeoffScale | null, includePageBreaks = true) {
+  const header = ['Page', 'Type', 'Label', 'Value', 'Unit', 'Layer', 'Created At'].join(',');
+  
   const rows = measurements.map((m) => {
     const c = computeMeasurement(m, scale);
-    const value = c.value == null ? '' : String(c.value);
-    const unit = c.unitLabel;
+    let value = '';
+    
+    if (c.kind === 'linear' && c.value !== null) {
+      value = formatNumber(c.value, 2);
+    } else if (c.kind === 'area' && c.value !== null) {
+      value = formatNumber(c.value, 2);
+    } else if (c.kind === 'count') {
+      value = String(c.count);
+    }
+    
+    const unitLabel = c.kind === 'count' ? 'count' : c.unitLabel;
+    
     return [
-      escapeCsv(m.id),
+      String(m.pageIndex + 1),
       escapeCsv(m.kind),
+      escapeCsv(m.label || ''),
       escapeCsv(value),
-      escapeCsv(unit),
+      escapeCsv(unitLabel),
+      escapeCsv(m.layerId || ''),
       escapeCsv(new Date(m.createdAt).toISOString()),
     ].join(',');
   });
-  return [header, ...rows].join('\n');
+
+  // Add totals
+  const totals = computeTotals(measurements, scale);
+  
+  // Create empty row matching header structure
+  const emptyRow = new Array(7).fill('').join(',');
+  const totalRows = [
+    emptyRow,
+    ['', '--- TOTALS ---', '', '', '', '', ''].join(','),
+  ];
+  
+  if (totals.totalLength !== null) {
+    totalRows.push([
+      '',
+      'Total Linear',
+      '',
+      formatNumber(totals.totalLength, 2),
+      scale?.unit || '',
+      '',
+      '',
+    ].join(','));
+  }
+  
+  if (totals.totalArea !== null) {
+    totalRows.push([
+      '',
+      'Total Area',
+      '',
+      formatNumber(totals.totalArea, 2),
+      scale ? `${scale.unit}²` : '',
+      '',
+      '',
+    ].join(','));
+  }
+  
+  if (totals.totalCount > 0) {
+    totalRows.push([
+      '',
+      'Total Count',
+      '',
+      String(totals.totalCount),
+      'count',
+      '',
+      '',
+    ].join(','));
+  }
+
+  return [header, ...rows, ...totalRows].join('\n');
 }
 
 export function downloadText(filename: string, text: string, mime = 'text/plain') {
@@ -34,4 +94,13 @@ export function downloadText(filename: string, text: string, mime = 'text/plain'
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 2500);
+}
+
+export function exportMeasurements(
+  measurements: Measurement[], 
+  scale: TakeoffScale | null, 
+  filename = 'takeoff-measurements.csv'
+) {
+  const csv = measurementsToCsv(measurements, scale);
+  downloadText(filename, csv, 'text/csv');
 }
