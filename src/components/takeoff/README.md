@@ -70,6 +70,7 @@ F - Fullscreen
 +/- - Zoom in/out
 0 - Reset zoom
 ? - Show help
+Middle Mouse Button - Pan (click & drag)
 ```
 
 ## Usage

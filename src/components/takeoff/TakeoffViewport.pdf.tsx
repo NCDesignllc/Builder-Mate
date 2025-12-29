@@ -49,6 +49,8 @@ export function TakeoffViewportPdf({
 }: Props) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [pdfSize, setPdfSize] = useState({ width: 0, height: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
 
   const isPdf = !!plan && (plan.mime === "application/pdf" || plan.name?.toLowerCase().endsWith(".pdf"));
   const { doc, pages, loading, error } = usePdfDocument(isPdf ? plan : null);
@@ -148,6 +150,57 @@ export function TakeoffViewportPdf({
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel as any);
   }, []); // attach once
+
+  // Middle mouse button pan support
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+
+    const onMouseDown = (e: MouseEvent) => {
+      if (e.button === 1) { // Middle mouse button
+        e.preventDefault();
+        setIsPanning(true);
+        setPanStart({ x: e.clientX - el.scrollLeft, y: e.clientY - el.scrollTop });
+        el.style.cursor = 'grabbing';
+      }
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isPanning) return;
+      e.preventDefault();
+      const dx = e.clientX - panStart.x;
+      const dy = e.clientY - panStart.y;
+      el.scrollLeft = panStart.x - e.clientX + el.scrollLeft;
+      el.scrollTop = panStart.y - e.clientY + el.scrollTop;
+      setPanStart({ x: e.clientX - el.scrollLeft, y: e.clientY - el.scrollTop });
+    };
+
+    const onMouseUp = (e: MouseEvent) => {
+      if (e.button === 1 && isPanning) {
+        setIsPanning(false);
+        el.style.cursor = '';
+      }
+    };
+
+    const onMouseLeave = () => {
+      if (isPanning) {
+        setIsPanning(false);
+        el.style.cursor = '';
+      }
+    };
+
+    el.addEventListener("mousedown", onMouseDown);
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    el.addEventListener("mouseleave", onMouseLeave);
+
+    return () => {
+      el.removeEventListener("mousedown", onMouseDown);
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+      el.removeEventListener("mouseleave", onMouseLeave);
+    };
+  }, [isPanning, panStart]);
 
   if (!plan) return null;
 

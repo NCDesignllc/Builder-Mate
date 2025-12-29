@@ -91,11 +91,11 @@ export function TakeoffCanvas({ isDarkMode, projectId }: Props) {
 
       // Tool shortcuts
       if (e.key === 'v' || e.key === 'V') { setTool('select'); return; }
-      if (e.key === 'h' || e.key === 'H') { setTool('pan'); return; }
       if (e.key === 's' || e.key === 'S') { setTool('scale'); return; }
       if (e.key === 'l' || e.key === 'L') { setTool('linear'); return; }
       if (e.key === 'a' || e.key === 'A') { setTool('area'); return; }
       if (e.key === 'c' || e.key === 'C') { setTool('count'); return; }
+      if (e.key === 'h' || e.key === 'H') { setTool('pan'); return; }
 
       // Undo/Redo
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {

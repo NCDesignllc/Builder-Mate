@@ -43,9 +43,9 @@ export function TakeoffHelp({ isDarkMode, onClose }: Props) {
               </div>
               
               <div className={`p-3 rounded ${highlight}`}>
-                <div className="font-bold">Pan Tool (H)</div>
+                <div className="font-bold">Pan Tool (H or Middle Mouse)</div>
                 <div className={`text-sm ${muted}`}>
-                  Click and drag to pan the view. Also available by holding Space.
+                  Press H to activate pan mode, or use middle mouse button (scroll wheel click) to pan at any time.
                 </div>
               </div>
               
@@ -132,6 +132,10 @@ export function TakeoffHelp({ isDarkMode, onClose }: Props) {
               <div className="flex justify-between">
                 <span className="font-mono font-bold">+/-</span>
                 <span>Zoom In/Out</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-mono font-bold">Middle Mouse</span>
+                <span>Pan (click & drag)</span>
               </div>
             </div>
           </section>

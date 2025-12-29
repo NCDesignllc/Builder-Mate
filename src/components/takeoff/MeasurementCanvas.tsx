@@ -103,7 +103,15 @@ export function MeasurementCanvas({
 
   // Handle mouse down (start drawing or select)
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (e.button !== 0) return; // Only left click
+    // Middle mouse button (button 1) - temporarily enable pan tool
+    if (e.button === 1) {
+      e.preventDefault(); // Prevent default middle mouse behavior
+      // Note: Pan functionality would need to be implemented in the parent viewport component
+      // This canvas is for measurements only, not viewport panning
+      return;
+    }
+    
+    if (e.button !== 0) return; // Only left click for measurements
 
     const point = getCanvasPoint(e);
     const snappedPoint = applySnap(point, e.shiftKey);
