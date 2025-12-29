@@ -16,7 +16,7 @@ export function useUndoRedo(measurements: Measurement[], setMeasurements: (m: Me
     }
 
     const entry: HistoryEntry = {
-      measurements: JSON.parse(JSON.stringify(measurements)),
+      measurements: structuredClone ? structuredClone(measurements) : JSON.parse(JSON.stringify(measurements)),
       timestamp: Date.now(),
     };
 
@@ -27,14 +27,19 @@ export function useUndoRedo(measurements: Measurement[], setMeasurements: (m: Me
       
       // Keep only MAX_HISTORY entries
       if (updated.length > MAX_HISTORY) {
-        return updated.slice(-MAX_HISTORY);
+        const truncated = updated.slice(-MAX_HISTORY);
+        // Update index to point to last item in truncated history
+        setHistoryIndex(MAX_HISTORY - 1);
+        return truncated;
       }
       return updated;
     });
 
+    // Only increment index if we didn't truncate
     setHistoryIndex((prev) => {
-      const newIndex = prev + 1;
-      return newIndex >= MAX_HISTORY ? MAX_HISTORY - 1 : newIndex;
+      const newHistory = historyIndex >= 0 ? history.slice(0, historyIndex + 1) : history;
+      const futureLength = newHistory.length + 1;
+      return futureLength > MAX_HISTORY ? MAX_HISTORY - 1 : prev + 1;
     });
   }, [measurements]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -45,7 +50,7 @@ export function useUndoRedo(measurements: Measurement[], setMeasurements: (m: Me
     const prevEntry = history[prevIndex];
     
     setIsUndoing(true);
-    setMeasurements(JSON.parse(JSON.stringify(prevEntry.measurements)));
+    setMeasurements(structuredClone ? structuredClone(prevEntry.measurements) : JSON.parse(JSON.stringify(prevEntry.measurements)));
     setHistoryIndex(prevIndex);
   }, [history, historyIndex, setMeasurements]);
 
@@ -56,7 +61,7 @@ export function useUndoRedo(measurements: Measurement[], setMeasurements: (m: Me
     const nextEntry = history[nextIndex];
     
     setIsUndoing(true);
-    setMeasurements(JSON.parse(JSON.stringify(nextEntry.measurements)));
+    setMeasurements(structuredClone ? structuredClone(nextEntry.measurements) : JSON.parse(JSON.stringify(nextEntry.measurements)));
     setHistoryIndex(nextIndex);
   }, [history, historyIndex, setMeasurements]);
 

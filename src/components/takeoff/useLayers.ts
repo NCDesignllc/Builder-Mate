@@ -41,11 +41,15 @@ export function useLayers() {
   }, []);
 
   const deleteLayer = useCallback((id: string) => {
-    setLayers((prev) => prev.filter((l) => l.id !== id));
-    if (activeLayerId === id) {
-      setActiveLayerId(layers[0]?.id ?? null);
-    }
-  }, [activeLayerId, layers]);
+    setLayers((prev) => {
+      const newLayers = prev.filter((l) => l.id !== id);
+      // If deleting active layer, select first layer
+      if (activeLayerId === id) {
+        setActiveLayerId(newLayers[0]?.id ?? null);
+      }
+      return newLayers;
+    });
+  }, [activeLayerId]);
 
   const toggleVisibility = useCallback((id: string) => {
     setLayers((prev) => prev.map((l) => (l.id === id ? { ...l, visible: !l.visible } : l)));

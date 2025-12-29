@@ -22,9 +22,7 @@ export function measurementsToCsv(measurements: Measurement[], scale: TakeoffSca
       value = String(c.count);
     }
     
-    const unitLabel = c.kind === 'count' ? 'count' : 
-                      c.kind === 'linear' ? c.unitLabel :
-                      c.unitLabel;
+    const unitLabel = c.kind === 'count' ? 'count' : c.unitLabel;
     
     return [
       String(m.pageIndex + 1),
@@ -39,15 +37,12 @@ export function measurementsToCsv(measurements: Measurement[], scale: TakeoffSca
 
   // Add totals
   const totals = computeTotals(measurements, scale);
+  
+  // Create empty row matching header structure
+  const emptyRow = new Array(7).fill('').join(',');
   const totalRows = [
-    '',
-    '--- TOTALS ---',
-    '',
-    '',
-    '',
-    '',
-    '',
-    '',
+    emptyRow,
+    ['', '--- TOTALS ---', '', '', '', '', ''].join(','),
   ];
   
   if (totals.totalLength !== null) {
