@@ -10,7 +10,7 @@ type LoginProps = {
 
 type SignupProps = {
   mode: 'signup';
-  onSignup: (name: string, email: string, password: string) => void;
+  onSignup: (name: string, email: string, password: string, company: string) => void;
 };
 
 type ProfileProps = {
@@ -42,7 +42,8 @@ export function AuthPage(props: Props) {
       props.onSignup(
         String(fd.get('name') ?? ''),
         String(fd.get('email') ?? ''),
-        String(fd.get('password') ?? '')
+        String(fd.get('password') ?? ''),
+        String(fd.get('company') ?? '')
       );
       navigate(ROUTES.profile, { replace: true });
       return;
@@ -62,10 +63,16 @@ export function AuthPage(props: Props) {
 
         <form onSubmit={onSubmit} className="p-8 space-y-4">
           {props.mode === 'signup' && (
-            <div>
-              <label className="text-xs font-bold text-slate-500 uppercase">Name</label>
-              <input name="name" required className="w-full border p-2 rounded" placeholder="John Doe" />
-            </div>
+            <>
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase">Name</label>
+                <input name="name" required className="w-full border p-2 rounded" placeholder="John Doe" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase">Company</label>
+                <input name="company" required className="w-full border p-2 rounded" placeholder="ABC Construction" />
+              </div>
+            </>
           )}
 
           {props.mode !== 'profile' && (

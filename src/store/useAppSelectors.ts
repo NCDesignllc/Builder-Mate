@@ -6,6 +6,8 @@ import { useAppStore } from './useAppStore';
  */
 
 export const useUser = () => useAppStore((s) => s.user);
+export const useAccounts = () => useAppStore((s) => s.accounts);
+export const useActiveAccountId = () => useAppStore((s) => s.activeAccountId);
 export const useIsDarkMode = () => useAppStore((s) => s.isDarkMode);
 export const useSearchQuery = () => useAppStore((s) => s.searchQuery);
 
@@ -16,6 +18,9 @@ export const useEstimateItems = () => useAppStore((s) => s.estimateItems);
 export const useActions = () =>
   useAppStore((s) => ({
     setUser: s.setUser,
+    addAccount: s.addAccount,
+    switchAccount: s.switchAccount,
+    updateUser: s.updateUser,
     setIsDarkMode: s.setIsDarkMode,
     toggleDarkMode: s.toggleDarkMode,
     setSearchQuery: s.setSearchQuery,

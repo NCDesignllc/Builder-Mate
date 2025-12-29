@@ -82,12 +82,26 @@ function ShellRoute({
     navigate(ROUTES.landing, { replace: true });
   };
 
+  // Mock accounts for account switcher demo (in real app, would come from store)
+  const accounts = props.user ? [props.user] : [];
+  const onSwitchAccount = (accountId: string) => {
+    // In a real implementation, this would switch to a different account from the store
+    console.log('Switch to account:', accountId);
+  };
+  const onAddAccount = () => {
+    // Navigate to signup to add new account
+    navigate(ROUTES.signup);
+  };
+
   return (
     <AppShell
       user={props.user}
       isDarkMode={props.isDarkMode}
       onToggleDarkMode={() => props.setIsDarkMode(!props.isDarkMode)}
       onLogout={onLogout}
+      accounts={accounts}
+      onSwitchAccount={onSwitchAccount}
+      onAddAccount={onAddAccount}
       searchQuery={props.searchQuery}
       setSearchQuery={props.setSearchQuery}
       headerActions={headerActions}
@@ -208,6 +222,11 @@ export function AppRouterIntegrated(props: Props) {
                   isDarkMode={props.isDarkMode}
                   onToggleDarkMode={() => props.setIsDarkMode(!props.isDarkMode)}
                   onLogout={() => props.setUser(null)}
+                  onUpdateUser={(updates) => {
+                    if (props.user) {
+                      props.setUser({ ...props.user, ...updates });
+                    }
+                  }}
                 />
               </ShellRoute>
             </RequireAuth>

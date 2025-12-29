@@ -19,6 +19,33 @@ export const useAppStore = create<AppStore>()(
 
       // --- Auth ---
       setUser: (u) => set({ user: u }),
+      addAccount: (account) => {
+        set((state) => {
+          const exists = state.accounts.some((a) => a.id === account.id);
+          if (exists) return state;
+          return {
+            accounts: [...state.accounts, account],
+            activeAccountId: account.id,
+            user: account,
+          };
+        });
+      },
+      switchAccount: (accountId) => {
+        const account = get().accounts.find((a) => a.id === accountId);
+        if (account) {
+          set({ user: account, activeAccountId: accountId });
+        }
+      },
+      updateUser: (updates) => {
+        set((state) => {
+          if (!state.user) return state;
+          const updatedUser = { ...state.user, ...updates };
+          return {
+            user: updatedUser,
+            accounts: state.accounts.map((a) => (a.id === updatedUser.id ? updatedUser : a)),
+          };
+        });
+      },
 
       // --- Data ---
       setProjects: (projects) => set({ projects }),
@@ -81,6 +108,8 @@ export const useAppStore = create<AppStore>()(
       partialize: (state) => ({
         isDarkMode: state.isDarkMode,
         user: state.user,
+        accounts: state.accounts,
+        activeAccountId: state.activeAccountId,
         projects: state.projects,
       }),
     }
