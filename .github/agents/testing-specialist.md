@@ -10,7 +10,7 @@ infer: true
 metadata:
   role: Quality Assurance Specialist
   specialty: Test Coverage and Quality
-  frameworks: Jest, Vitest, React Testing Library
+  frameworks: Vitest, React Testing Library, Testing Library User Event
 ---
 
 # Testing Specialist Agent
@@ -65,8 +65,8 @@ For this React + TypeScript + Vite stack, recommend and work with:
 - `**/test-utils.ts`
 - `**/test-utils.tsx`
 - `**/setup-tests.ts`
+- `**/vitest.*.config.ts`
 - `**/vitest.config.ts`
-- `**/jest.config.js`
 - Documentation files related to testing
 
 ### Restricted Patterns (Read Only):
@@ -126,6 +126,7 @@ When reviewing tests, ensure:
 
 ### Testing React Components
 ```typescript
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentName } from './ComponentName';
@@ -149,6 +150,7 @@ describe('ComponentName', () => {
 
 ### Testing Custom Hooks
 ```typescript
+import { describe, it, expect } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useCustomHook } from './useCustomHook';
 
@@ -170,6 +172,7 @@ describe('useCustomHook', () => {
 
 ### Testing Zustand Stores
 ```typescript
+import { describe, it, expect, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useStore } from './store';
 
