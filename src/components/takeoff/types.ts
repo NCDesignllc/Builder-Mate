@@ -6,7 +6,13 @@ export type TakeoffTool =
   | "linear"    // Linear measurement (polyline)
   | "area"      // Area measurement (polygon)
   | "count"     // Count tool
-  | "label";    // Label/annotation
+  | "wallArea"  // Wall area tool
+  | "slope"     // Slope measurement
+  | "volume"    // Volume measurement
+  | "subtract"  // Subtract tool
+  | "markup"    // Markup/annotation tool
+  | "download"  // Export/download tool
+  | "label";    // Label/annotation (legacy)
 
 // ==================== PLAN SOURCE ====================
 export type PlanSource = {
