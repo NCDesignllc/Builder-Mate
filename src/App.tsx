@@ -22,9 +22,27 @@ export default function App() {
   const { speak } = useTTS();
   const { generateContent } = useGemini();
 
-  const onLogin = (_email: string, _password: string) => setUser({ name: 'Alex Johnson', title: 'Estimator' });
-  const onSignup = (_name: string, _email: string, _password: string) => setUser({ name: 'Alex Johnson', title: 'Estimator' });
-  const onProfile = (title: string) => setUser((u) => (u ? { ...u, title } : { name: 'Alex Johnson', title }));
+  const onLogin = (_email: string, _password: string) => setUser({ 
+    id: 'user-1',
+    name: 'Alex Johnson', 
+    title: 'Estimator',
+    email: _email,
+    role: 'Estimator'
+  });
+  const onSignup = (name: string, email: string, _password: string, company: string) => setUser({ 
+    id: `user-${Date.now()}`,
+    name, 
+    title: 'Estimator',
+    email,
+    company,
+    role: 'Estimator'
+  });
+  const onProfile = (title: string) => setUser((u) => (u ? { ...u, title } : { 
+    id: 'user-1',
+    name: 'Alex Johnson', 
+    title,
+    role: 'Estimator'
+  }));
 
   const onGeneratePlan = async (projectId: string) => {
     const p = projects.find((x) => x.id === projectId);

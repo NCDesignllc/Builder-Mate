@@ -7,6 +7,8 @@ export type AppState = {
 
   // Auth
   user: User | null;
+  accounts: User[];
+  activeAccountId: string | null;
 
   // Data
   projects: Project[];
@@ -22,6 +24,9 @@ export type AppActions = {
 
   // Auth
   setUser: (u: User | null) => void;
+  addAccount: (account: User) => void;
+  switchAccount: (accountId: string) => void;
+  updateUser: (updates: Partial<User>) => void;
 
   // Data
   setProjects: (projects: Project[]) => void;

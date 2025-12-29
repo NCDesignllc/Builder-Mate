@@ -4,12 +4,19 @@ import type { User } from '../../lib/types';
 import { SidebarNav } from './SidebarNav';
 import { AppHeaderSearch } from './AppHeaderSearch';
 import { AppHeaderProvider, type AppHeaderApi } from './AppHeaderContext';
+import { AccountSwitcher } from './AccountSwitcher';
+import { ProfileBubble } from './ProfileBubble';
 
 type Props = {
   user: User | null;
   isDarkMode: boolean;
   onToggleDarkMode: () => void;
   onLogout: () => void;
+
+  // Optional account management
+  accounts?: User[];
+  onSwitchAccount?: (accountId: string) => void;
+  onAddAccount?: () => void;
 
   // Optional header search (default fallback)
   searchQuery?: string;
@@ -26,6 +33,9 @@ export function AppShell({
   isDarkMode,
   onToggleDarkMode,
   onLogout,
+  accounts = [],
+  onSwitchAccount,
+  onAddAccount,
   searchQuery,
   setSearchQuery,
   headerActions,
@@ -52,6 +62,7 @@ export function AppShell({
   );
 
   const hasSearch = typeof searchQuery === 'string' && typeof setSearchQuery === 'function';
+  const hasAccountSwitching = user && accounts.length > 0 && onSwitchAccount && onAddAccount;
 
   return (
     <AppHeaderProvider value={api}>
@@ -88,6 +99,20 @@ export function AppShell({
                 <button onClick={onToggleDarkMode} className="p-2 rounded-full hover:bg-slate-100/10" title="Toggle dark mode">
                   {isDarkMode ? <Sun size={18}/> : <Moon size={18}/>}
                 </button>
+                
+                {/* Show AccountSwitcher if available, otherwise show simple profile bubble or logout */}
+                {hasAccountSwitching ? (
+                  <AccountSwitcher
+                    currentUser={user}
+                    accounts={accounts}
+                    onSwitchAccount={onSwitchAccount}
+                    onAddAccount={onAddAccount}
+                    isDarkMode={isDarkMode}
+                  />
+                ) : user ? (
+                  <ProfileBubble user={user} size="sm" />
+                ) : null}
+                
                 <button onClick={onLogout} className="text-red-600 font-bold flex items-center text-xs px-3 py-2 rounded hover:bg-red-500/10" title="Logout">
                   <LogOut size={16} className="mr-2" /> Logout
                 </button>
