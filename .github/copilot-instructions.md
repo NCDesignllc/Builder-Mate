@@ -102,7 +102,42 @@ export function ComponentName({ isOpen, onClose, isDarkMode }: Props) {
 - **Derived state**: Use `useMemo` for computed values
 - **Side effects**: Use `useEffect` with proper dependency arrays
 
-#### Zustand Store Pattern
+#### Store Patterns
+
+The repository uses two state management patterns:
+
+**1. Zustand Store Pattern (preferred for new stores):**
+```typescript
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+
+type StoreState = {
+  value: string;
+  setValue: (v: string) => void;
+  action: () => void;
+};
+
+export const useStoreName = create<StoreState>()(
+  persist(
+    (set, get) => ({
+      value: '',
+      setValue: (v) => set({ value: v }),
+      action: () => {
+        // Access state with get()
+        const current = get().value;
+        set({ value: current + 'updated' });
+      },
+    }),
+    {
+      name: 'store-name',
+      // Optional: partialize to control what gets persisted
+      partialize: (state) => ({ value: state.value }),
+    }
+  )
+);
+```
+
+**2. React Hook Store Pattern (legacy, used in some stores):**
 ```typescript
 import React from 'react';
 
