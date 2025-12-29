@@ -6,22 +6,20 @@ node_modules/
 # Testing
 /coverage
 
-# Production
+# Build outputs
 dist/
 build/
 
-# Misc
-.DS_Store
-*.pem
+# Environment variables
+.env
+.env.local
+.env*.local
 
-# Debug
+# Logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-
-# Local env files
-.env
-.env*.local
 
 # Vite
 .vite/
@@ -35,3 +33,8 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.sw?
+
+# OS
+.DS_Store
+*.pem
+Thumbs.db
