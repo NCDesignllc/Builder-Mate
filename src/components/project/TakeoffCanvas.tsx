@@ -191,6 +191,7 @@ export function TakeoffCanvas({ isDarkMode, projectId }: Props) {
               measurements={measurements}
               onAddMeasurement={addMeasurement}
               onUpdateMeasurement={updateMeasurement}
+              onSetScale={setScale}
             />
 
             {isPdf && (pdfLoading || pdfError) ? (

@@ -3,6 +3,7 @@ import { Maximize2, Minimize2, Minus, Plus } from "lucide-react";
 import { usePdfDocument } from "./usePdfDocument";
 import { PdfViewport } from "./PdfViewport";
 import { MeasurementCanvas } from "./MeasurementCanvas";
+import { ScaleTool } from "./ScaleTool";
 import type { PlanSource, TakeoffTool, TakeoffScale, Measurement } from "./types";
 
 type Props = {
@@ -15,6 +16,7 @@ type Props = {
   measurements?: Measurement[];
   onAddMeasurement?: (m: Measurement) => void;
   onUpdateMeasurement?: (id: string, patch: Partial<Measurement>) => void;
+  onSetScale?: (scale: TakeoffScale) => void;
 };
 
 function clamp(n: number, min: number, max: number) {
@@ -43,6 +45,7 @@ export function TakeoffViewportPdf({
   measurements = [],
   onAddMeasurement,
   onUpdateMeasurement,
+  onSetScale,
 }: Props) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [pdfSize, setPdfSize] = useState({ width: 0, height: 0 });
@@ -236,7 +239,16 @@ export function TakeoffViewportPdf({
                   isDarkMode={isDarkMode}
                   onSize={(w, h) => setPdfSize({ width: w, height: h })}
                 />
-                {pdfSize.width > 0 && pdfSize.height > 0 && onAddMeasurement && (
+                {pdfSize.width > 0 && pdfSize.height > 0 && tool === 'scale' && onSetScale && (
+                  <ScaleTool
+                    width={pdfSize.width}
+                    height={pdfSize.height}
+                    isDarkMode={isDarkMode}
+                    onSetScale={onSetScale}
+                    existingScale={scale}
+                  />
+                )}
+                {pdfSize.width > 0 && pdfSize.height > 0 && tool !== 'scale' && onAddMeasurement && (
                   <MeasurementCanvas
                     width={pdfSize.width}
                     height={pdfSize.height}
