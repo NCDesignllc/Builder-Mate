@@ -11,6 +11,7 @@ export { useUndoRedo } from './useUndoRedo';
 export { useLayers } from './useLayers';
 export { usePdfDocument } from './usePdfDocument';
 export { usePanZoom } from './usePanZoom';
+export { usePageVisibility } from './usePageVisibility';
 
 // Components
 export { TakeoffToolbar } from './TakeoffToolbar';
@@ -27,3 +28,6 @@ export { PdfViewport } from './PdfViewport';
 export { PdfPageCanvas } from './PdfPageCanvas';
 export { PdfThumbnailsRail } from './PdfThumbnailsRail';
 export { PageNav } from './PageNav';
+export { BlueprintThumbnailBar } from './BlueprintThumbnailBar';
+export { BlueprintThumbnailItem } from './BlueprintThumbnailItem';
+export { HiddenPagesToggle } from './HiddenPagesToggle';

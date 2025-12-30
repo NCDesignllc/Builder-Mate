@@ -118,3 +118,12 @@ export type ExportOptions = {
   includeLegend: boolean;
   groupBy?: "page" | "layer" | "type";
 };
+
+// ==================== PAGE VISIBILITY ====================
+export type PageVisibility = {
+  pageIndex: number;
+  isHidden: boolean;
+  label?: string;         // Optional custom page label (e.g., "A2.1")
+};
+
+export type PageVisibilityMap = Record<number, PageVisibility>;
