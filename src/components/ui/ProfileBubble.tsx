@@ -37,13 +37,27 @@ export function ProfileBubble({ user, size = 'md', onClick, className = '' }: Pr
     </div>
   );
 
+  const baseClassName = `${sizeClass} rounded-full bg-gradient-to-br from-orange-500 to-orange-600 text-white font-bold flex items-center justify-center shrink-0 overflow-hidden transition-all ${className}`;
+
+  // Only render as button if onClick is provided to avoid nested button issues
+  if (onClick) {
+    return (
+      <button
+        onClick={onClick}
+        className={`${baseClassName} hover:ring-2 hover:ring-orange-400 hover:ring-offset-2`}
+        title={`${user.name} (${user.role})`}
+      >
+        {content}
+      </button>
+    );
+  }
+
   return (
-    <button
-      onClick={onClick}
-      className={`${sizeClass} rounded-full bg-gradient-to-br from-orange-500 to-orange-600 text-white font-bold flex items-center justify-center shrink-0 overflow-hidden hover:ring-2 hover:ring-orange-400 hover:ring-offset-2 transition-all ${className}`}
+    <div
+      className={baseClassName}
       title={`${user.name} (${user.role})`}
     >
       {content}
-    </button>
+    </div>
   );
 }
