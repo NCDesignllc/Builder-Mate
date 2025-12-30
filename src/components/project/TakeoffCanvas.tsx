@@ -1,6 +1,6 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState, useEffect } from "react";
 import { UploadCloud, X } from "lucide-react";
-import type { PlanSource } from "../takeoff/types";
+import type { PlanSource, PageVisibilityMap } from "../takeoff/types";
 import { uuid } from "../takeoff/geometry";
 import { useTakeoffPersist } from "../takeoff/useTakeoffPersist";
 import { useUndoRedo } from "../takeoff/useUndoRedo";
@@ -8,15 +8,26 @@ import { TakeoffToolbar } from "../takeoff/TakeoffToolbar";
 import { TakeoffItemsPanel } from "../takeoff/TakeoffItemsPanel";
 import { TakeoffViewportPdf } from "../takeoff/TakeoffViewport.pdf";
 import { usePdfDocument } from "../takeoff/usePdfDocument";
-import { BlueprintThumbnailBar } from "../takeoff/BlueprintThumbnailBar";
 import { usePageVisibility } from "../takeoff/usePageVisibility";
+
+// Thumbnail data exported for inline strip rendering
+export type ThumbnailData = {
+  doc: any;
+  pages: number;
+  activePageIndex: number;
+  pageVisibility: PageVisibilityMap;
+  showHiddenPages: boolean;
+  removedPages: Set<number>;
+  onPageSelect: (index: number) => void;
+};
 
 type Props = {
   isDarkMode: boolean;
   projectId?: string;
+  onThumbnailDataChange?: (data: ThumbnailData | null) => void;
 };
 
-export function TakeoffCanvas({ isDarkMode, projectId }: Props) {
+export function TakeoffCanvas({ isDarkMode, projectId, onThumbnailDataChange }: Props) {
   const [plan, setPlan] = useState<PlanSource | null>(null);
   const [pageIndex, setPageIndex] = useState(0);
   const [tool, setTool] = useState<"select" | "pan" | "scale" | "linear" | "area" | "count" | "label">("select");
@@ -105,11 +116,11 @@ export function TakeoffCanvas({ isDarkMode, projectId }: Props) {
   const safePageIndex = pages > 0 ? Math.max(0, Math.min(pageIndex, pages - 1)) : pageIndex;
 
   // Handle page selection - skip hidden pages if not showing them
-  const handlePageSelect = (index: number) => {
+  const handlePageSelect = React.useCallback((index: number) => {
     if (!isPageHidden(index) || showHiddenPages) {
       setPageIndex(index);
     }
-  };
+  }, [isPageHidden, showHiddenPages]);
 
   // Keyboard shortcuts
   React.useEffect(() => {
@@ -165,28 +176,27 @@ export function TakeoffCanvas({ isDarkMode, projectId }: Props) {
     });
   }, [measurements, safePageIndex, removedPages]);
 
-  return (
-    <div className="h-[700px] flex flex-col">
-      {/* Horizontal thumbnail bar at top */}
-      {doc && pages > 1 && (
-        <BlueprintThumbnailBar
-          doc={doc}
-          totalPages={pages}
-          activePageIndex={safePageIndex}
-          onPageSelect={handlePageSelect}
-          pageVisibility={pageVisibility}
-          hiddenPageIndices={hiddenPageIndices}
-          showHiddenPages={showHiddenPages}
-          onToggleShowHidden={() => setShowHiddenPages(!showHiddenPages)}
-          onHidePage={hidePageByIndex}
-          onShowPage={showPageByIndex}
-          onRemovePage={removePageByIndex}
-          getPageLabel={getPageLabel}
-          removedPages={removedPages}
-          isDarkMode={isDarkMode}
-        />
-      )}
+  // Provide thumbnail data to parent for inline rendering
+  useEffect(() => {
+    if (onThumbnailDataChange) {
+      if (doc && pages > 1) {
+        onThumbnailDataChange({
+          doc,
+          pages,
+          activePageIndex: safePageIndex,
+          pageVisibility,
+          showHiddenPages,
+          removedPages,
+          onPageSelect: handlePageSelect,
+        });
+      } else {
+        onThumbnailDataChange(null);
+      }
+    }
+  }, [doc, pages, safePageIndex, pageVisibility, showHiddenPages, removedPages, onThumbnailDataChange, handlePageSelect]);
 
+  return (
+    <div className="h-[600px] flex flex-col">
       {/* Main content area */}
       <div className="flex-1 flex gap-4 min-h-0">
         {/* Toolbar */}

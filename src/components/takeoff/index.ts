@@ -31,3 +31,4 @@ export { PageNav } from './PageNav';
 export { BlueprintThumbnailBar } from './BlueprintThumbnailBar';
 export { BlueprintThumbnailItem } from './BlueprintThumbnailItem';
 export { HiddenPagesToggle } from './HiddenPagesToggle';
+export { InlineThumbnailStrip } from './InlineThumbnailStrip';
