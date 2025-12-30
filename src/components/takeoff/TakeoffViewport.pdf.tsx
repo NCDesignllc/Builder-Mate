@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Maximize2, Minimize2, Minus, Plus } from "lucide-react";
 import { usePdfDocument } from "./usePdfDocument";
 import { PdfViewport } from "./PdfViewport";
@@ -22,6 +22,9 @@ type Props = {
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
+
+// Minimum movement (in pixels) required before a click becomes a drag
+const PAN_THRESHOLD = 3;
 
 /**
  * TakeoffViewportPdf
@@ -49,8 +52,21 @@ export function TakeoffViewportPdf({
 }: Props) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [pdfSize, setPdfSize] = useState({ width: 0, height: 0 });
-  const [isPanning, setIsPanning] = useState(false);
-  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  // Cursor state managed via React to avoid direct DOM manipulation conflicts
+  const [panCursor, setPanCursor] = useState<'grab' | 'grabbing' | null>(null);
+  
+  // Pan state using refs to avoid stale closure issues
+  const panStateRef = useRef({
+    isPanning: false,
+    isActuallyDragging: false,  // becomes true after movement exceeds threshold
+    pointerId: -1,
+    startX: 0,
+    startY: 0,
+    scrollStartX: 0,
+    scrollStartY: 0,
+    lastX: 0,
+    lastY: 0,
+  });
 
   const isPdf = !!plan && (plan.mime === "application/pdf" || plan.name?.toLowerCase().endsWith(".pdf"));
   const { doc, pages, loading, error } = usePdfDocument(isPdf ? plan : null);
@@ -134,12 +150,18 @@ export function TakeoffViewportPdf({
   // Mouse wheel zoom over canvas area:
   // - Prevents default so wheel doesn't just scroll-pan.
   // - Hold Shift to allow normal scroll-pan if you ever want it.
+  // - When pan tool is active AND not actively dragging, allow scroll pan via wheel
   useEffect(() => {
     const el = viewportRef.current;
     if (!el) return;
 
     const onWheel = (e: WheelEvent) => {
-      if (e.shiftKey) return; // allow scroll-pan with Shift+wheel
+      // Allow normal scroll-pan with Shift+wheel
+      if (e.shiftKey) return;
+      // When pan tool is active, allow scroll-based panning via wheel
+      if (tool === 'pan' && !panStateRef.current.isActuallyDragging) {
+        return; // Let native scroll handle it
+      }
       e.preventDefault();
 
       // wheel up (deltaY < 0) -> zoom in
@@ -149,58 +171,114 @@ export function TakeoffViewportPdf({
 
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel as any);
-  }, []); // attach once
+  }, [tool]); // Re-attach when tool changes
 
-  // Middle mouse button pan support
-  useEffect(() => {
+  // Pointer-based pan/grab tool support
+  // Uses pointer capture for smooth dragging that continues outside the viewport
+  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     const el = viewportRef.current;
     if (!el) return;
-
-    const onMouseDown = (e: MouseEvent) => {
-      if (e.button === 1) { // Middle mouse button
-        e.preventDefault();
-        setIsPanning(true);
-        setPanStart({ x: e.clientX - el.scrollLeft, y: e.clientY - el.scrollTop });
-        el.style.cursor = 'grabbing';
-      }
+    
+    // Pan on left click when pan tool is active, OR on middle mouse button always
+    const isPanTool = tool === 'pan' && e.button === 0;
+    const isMiddleMouse = e.button === 1;
+    
+    if (!isPanTool && !isMiddleMouse) return;
+    
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Capture the pointer for smooth drag that continues outside the element
+    el.setPointerCapture(e.pointerId);
+    
+    panStateRef.current = {
+      isPanning: true,
+      isActuallyDragging: false,  // Not dragging yet - need to exceed threshold
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      scrollStartX: el.scrollLeft,
+      scrollStartY: el.scrollTop,
+      lastX: e.clientX,
+      lastY: e.clientY,
     };
+    
+    // Apply visual feedback: cursor changes via React state
+    setPanCursor('grab');
+  }, [tool]);
 
-    const onMouseMove = (e: MouseEvent) => {
-      if (!isPanning) return;
+  const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const el = viewportRef.current;
+    const state = panStateRef.current;
+    
+    if (!el || !state.isPanning || e.pointerId !== state.pointerId) return;
+    
+    const dx = e.clientX - state.startX;
+    const dy = e.clientY - state.startY;
+    
+    // Check if we've exceeded the threshold to start actual dragging
+    if (!state.isActuallyDragging) {
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      if (distance < PAN_THRESHOLD) {
+        return; // Not yet dragging - simple click
+      }
+      // Threshold exceeded - start actual drag
+      state.isActuallyDragging = true;
+      setPanCursor('grabbing');
+    }
+    
+    // Prevent default to avoid text selection and other interference
+    e.preventDefault();
+    
+    // Pan by adjusting scroll position
+    el.scrollLeft = state.scrollStartX - dx;
+    el.scrollTop = state.scrollStartY - dy;
+    
+    state.lastX = e.clientX;
+    state.lastY = e.clientY;
+  }, []);
+
+  const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const el = viewportRef.current;
+    const state = panStateRef.current;
+    
+    if (!el || !state.isPanning || e.pointerId !== state.pointerId) return;
+    
+    // Release pointer capture
+    try {
+      el.releasePointerCapture(e.pointerId);
+    } catch {
+      // Pointer may have already been released
+    }
+    
+    // Reset state
+    panStateRef.current = {
+      isPanning: false,
+      isActuallyDragging: false,
+      pointerId: -1,
+      startX: 0,
+      startY: 0,
+      scrollStartX: 0,
+      scrollStartY: 0,
+      lastX: 0,
+      lastY: 0,
+    };
+    
+    // Reset cursor via React state
+    setPanCursor(null);
+  }, [tool]);
+
+  const handlePointerCancel = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    // Treat cancel same as up
+    handlePointerUp(e);
+  }, [handlePointerUp]);
+
+  // Prevent context menu during pan operations
+  const handleContextMenu = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (panStateRef.current.isPanning) {
       e.preventDefault();
-      const dx = e.clientX - panStart.x;
-      const dy = e.clientY - panStart.y;
-      el.scrollLeft = panStart.x - e.clientX + el.scrollLeft;
-      el.scrollTop = panStart.y - e.clientY + el.scrollTop;
-      setPanStart({ x: e.clientX - el.scrollLeft, y: e.clientY - el.scrollTop });
-    };
-
-    const onMouseUp = (e: MouseEvent) => {
-      if (e.button === 1 && isPanning) {
-        setIsPanning(false);
-        el.style.cursor = '';
-      }
-    };
-
-    const onMouseLeave = () => {
-      if (isPanning) {
-        setIsPanning(false);
-        el.style.cursor = '';
-      }
-    };
-
-    el.addEventListener("mousedown", onMouseDown);
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onMouseUp);
-    el.addEventListener("mouseleave", onMouseLeave);
-
-    return () => {
-      el.removeEventListener("mousedown", onMouseDown);
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
-      el.removeEventListener("mouseleave", onMouseLeave);
-    };
-  }, [isPanning, panStart]);
+    }
+  }, []);
 
   if (!plan) return null;
 
@@ -278,7 +356,23 @@ export function TakeoffViewportPdf({
 
       {/* Canvas area */}
       <div className="absolute inset-0" style={{ paddingTop: toolbarH }}>
-        <div ref={viewportRef} className="absolute inset-0 overflow-auto overscroll-contain">
+        <div 
+          ref={viewportRef} 
+          className="absolute inset-0 overflow-auto overscroll-contain"
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerCancel}
+          onContextMenu={handleContextMenu}
+          style={{
+            // Prevent text selection during pan
+            userSelect: tool === 'pan' ? 'none' : undefined,
+            // Prevent browser gesture handling (like back/forward swipe) during pan
+            touchAction: tool === 'pan' ? 'none' : undefined,
+            // Cursor management: panCursor takes precedence during active pan, otherwise use tool default
+            cursor: panCursor ?? (tool === 'pan' ? 'grab' : undefined),
+          }}
+        >
           {isPdf && doc && !error ? (
             <div className="p-6 inline-block align-top relative">
               <div 
