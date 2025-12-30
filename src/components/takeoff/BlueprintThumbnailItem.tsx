@@ -1,6 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Eye, EyeOff, X } from 'lucide-react';
 
+// Thumbnail scale for horizontal layout (smaller than vertical rail)
+const THUMBNAIL_SCALE = 0.12;
+
 type Props = {
   doc: any;
   pageIndex: number;
@@ -39,7 +42,7 @@ export function BlueprintThumbnailItem({
         const page = await doc.getPage(pageIndex + 1);
         if (cancelled) return;
 
-        const viewport = page.getViewport({ scale: 0.12 }); // smaller thumbnail for horizontal layout
+        const viewport = page.getViewport({ scale: THUMBNAIL_SCALE });
         const canvas = canvasRef.current;
         if (!canvas) return;
 

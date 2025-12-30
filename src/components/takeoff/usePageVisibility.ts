@@ -138,12 +138,13 @@ export function usePageVisibility({
   );
 
   const removePageByIndex = useCallback((pageIndex: number) => {
+    // Add to removed pages set
     setRemovedPages((prev) => {
       const next = new Set(prev);
       next.add(pageIndex);
       return next;
     });
-    // Also remove from visibility map
+    // Clean up visibility data to prevent orphaned state when page is removed
     setPageVisibility((prev) => {
       const copy = { ...prev };
       delete copy[pageIndex];

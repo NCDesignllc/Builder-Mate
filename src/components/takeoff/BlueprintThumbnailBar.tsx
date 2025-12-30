@@ -5,6 +5,9 @@ import { HiddenPagesToggle } from './HiddenPagesToggle';
 import { Modal } from '../ui/Modal';
 import type { PageVisibilityMap } from './types';
 
+// Scroll distance in pixels when clicking navigation buttons
+const SCROLL_DISTANCE = 200;
+
 type Props = {
   doc: any;
   totalPages: number;
@@ -73,12 +76,12 @@ export function BlueprintThumbnailBar({
 
   const scrollLeft = () => {
     const el = scrollRef.current;
-    if (el) el.scrollBy({ left: -200, behavior: 'smooth' });
+    if (el) el.scrollBy({ left: -SCROLL_DISTANCE, behavior: 'smooth' });
   };
 
   const scrollRight = () => {
     const el = scrollRef.current;
-    if (el) el.scrollBy({ left: 200, behavior: 'smooth' });
+    if (el) el.scrollBy({ left: SCROLL_DISTANCE, behavior: 'smooth' });
   };
 
   // Scroll active page into view
