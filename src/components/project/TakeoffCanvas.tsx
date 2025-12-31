@@ -5,7 +5,6 @@ import { uuid } from "../takeoff/geometry";
 import { useTakeoffPersist } from "../takeoff/useTakeoffPersist";
 import { useUndoRedo } from "../takeoff/useUndoRedo";
 import { TakeoffToolbar } from "../takeoff/TakeoffToolbar";
-import { BlueprintThumbnailBar } from "../takeoff/BlueprintThumbnailBar";
 import { TakeoffItemsPanel } from "../takeoff/TakeoffItemsPanel";
 import { TakeoffViewportPdf } from "../takeoff/TakeoffViewport.pdf";
 import { usePdfDocument } from "../takeoff/usePdfDocument";
@@ -198,27 +197,6 @@ export function TakeoffCanvas({ isDarkMode, projectId, onThumbnailDataChange }: 
 
   return (
     <div className="h-[600px] flex flex-col">
-      {/* Horizontal thumbnail bar at top (matches desired layout) */}
-      {doc && pages > 1 && (
-        <div className="mb-3">
-          <BlueprintThumbnailBar
-            doc={doc}
-            totalPages={pages}
-            activePageIndex={safePageIndex}
-            onPageSelect={handlePageSelect}
-            pageVisibility={pageVisibility}
-            hiddenPageIndices={hiddenPageIndices}
-            showHiddenPages={showHiddenPages}
-            onToggleShowHidden={() => setShowHiddenPages(!showHiddenPages)}
-            onHidePage={hidePageByIndex}
-            onShowPage={showPageByIndex}
-            onRemovePage={removePageByIndex}
-            getPageLabel={getPageLabel}
-            removedPages={removedPages}
-            isDarkMode={isDarkMode}
-          />
-        </div>
-      )}
       {/* Main content area */}
       <div className="flex-1 flex gap-4 min-h-0">
         {/* Toolbar */}
